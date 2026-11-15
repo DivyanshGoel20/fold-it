@@ -688,6 +688,8 @@ export class Scene {
     const cx = W / 2 + cam.ox;
     const g0 = this.sy(0);
     const near = Math.min(towerHalf, W * 0.14);
+    const gap = W < 640 ? 12 : 26;
+    const pad = W < 640 ? 12 : 28;
 
     const accR: number[] = [0], accL: number[] = [0];
     for (const te of this.thingEls) {
@@ -713,11 +715,11 @@ export class Scene {
       if (back) {
         x = cx + te.t.backdrop! * wp - wp / 2;
       } else if (te.side > 0) {
-        x = cx + near + 26 + accR[0];
-        accR[0] += (wp + 28) * a;
+        x = cx + near + gap + accR[0];
+        accR[0] += (wp + pad) * a;
       } else {
-        x = cx - near - 26 - accL[0] - wp;
-        accL[0] += (wp + 28) * a;
+        x = cx - near - gap - accL[0] - wp;
+        accL[0] += (wp + pad) * a;
       }
       const el = te.el;
       el.style.width = wp + 'px';
