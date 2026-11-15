@@ -8,21 +8,14 @@ export const MAX_FOLD = 102;
 export const EARTH_R = 6.371e6;
 export const MOON_R = 1.7374e6;
 export const MOON_ALT = 3.844e8 - EARTH_R; // surface of Earth to centre of Moon
+export const SUN_R = 6.96e8;
+export const SUN_ALT = 1.496e11;
 export const LY = 9.4607e15;
 
 export const thickness = (n: number) => PAPER_T * Math.pow(2, n);
 
 export function layers(n: number): string {
   return (1n << BigInt(Math.max(0, Math.round(n)))).toLocaleString('en-US');
-}
-
-/** Footprint of the folded sheet, halving the long side each fold. */
-export function footprint(n: number): [number, number] {
-  let a = A4.w, b = A4.h;
-  for (let i = 0; i < n; i++) {
-    if (b >= a) b /= 2; else a /= 2;
-  }
-  return [Math.min(a, b), Math.max(a, b)];
 }
 
 // ---------- formatting ----------
@@ -33,7 +26,6 @@ const sig = (v: number, digits = 3) => {
 };
 
 export function fmtLen(m: number): { v: string; u: string } {
-  if (m < 1e-6) return { v: sig(m * 1e9), u: 'nm' };
   if (m < 9e-5) return { v: sig(m * 1e6), u: 'µm' };
   if (m < 0.01) return { v: sig(m * 1e3, 2), u: 'mm' };
   if (m < 1) return { v: sig(m * 100), u: 'cm' };
@@ -46,6 +38,21 @@ export function fmtLen(m: number): { v: string; u: string } {
   if (ly < 1e6) return { v: sig(ly / 1e3), u: 'thousand light years' };
   if (ly < 1e9) return { v: sig(ly / 1e6), u: 'million light years' };
   return { v: sig(ly / 1e9), u: 'billion light years' };
+}
+
+/** Long-form unit words for the big headline. */
+export function fmtWords(m: number): { v: string; u: string } {
+  const f = fmtLen(m);
+  const words: Record<string, string> = {
+    'µm': 'micrometres',
+    mm: 'millimetres',
+    cm: 'centimetres',
+    m: 'metres',
+    km: 'kilometres',
+  };
+  let u = words[f.u] ?? f.u;
+  if (f.v === '1' && u.endsWith('s')) u = u.slice(0, -1);
+  return { v: f.v, u };
 }
 
 export const fmt = (m: number) => {
@@ -66,79 +73,67 @@ export function fmtLightTime(m: number): string {
   return `${sig(y / 1e9)} billion years`;
 }
 
-// ---------- reference objects standing on the ground ----------
+// ---------- reference objects (vintage plates) ----------
 
 export interface Thing {
   id: string;
-  art: string;
   name: string;
-  h: number; // metres
-  size?: string; // label override
-  backdrop?: number; // if set: drawn behind the tower, horizontal offset as fraction of own width
+  credit: string;
+  /** real-world height of the whole image, metres (or give w) */
+  h?: number;
+  /** real-world width of the whole image, metres */
+  w?: number;
+  size: string;
+  /** drawn behind the tower, centred at this offset (fraction of own width) */
+  backdrop?: number;
 }
 
 export const THINGS: Thing[] = [
-  { id: 'rbc', art: 'rbc', name: 'Red blood cell', h: 8e-6 },
-  { id: 'hair', art: 'hair', name: 'Human hair, end-on', h: 7e-5 },
-  { id: 'mite', art: 'mite', name: 'Dust mite', h: 2e-4 },
-  { id: 'salt', art: 'salt', name: 'Grain of salt', h: 3e-4 },
-  { id: 'sand', art: 'sand', name: 'Grain of sand', h: 5e-4 },
-  { id: 'poppy', art: 'poppy', name: 'Poppy seed', h: 1e-3 },
-  { id: 'ant', art: 'ant', name: 'Ant', h: 2.2e-3, size: '5 mm long' },
-  { id: 'ladybug', art: 'ladybug', name: 'Ladybug', h: 4e-3, size: '6 mm long' },
-  { id: 'blueberry', art: 'blueberry', name: 'Blueberry', h: 0.012 },
-  { id: 'coin', art: 'coin', name: 'Coin, on its edge', h: 0.0243 },
-  { id: 'golf', art: 'golf', name: 'Golf ball', h: 0.0427 },
-  { id: 'mug', art: 'mug', name: 'Coffee mug', h: 0.095 },
-  { id: 'cat', art: 'cat', name: 'Cat', h: 0.32 },
-  { id: 'toddler', art: 'toddler', name: 'Toddler', h: 0.85 },
-  { id: 'adult', art: 'adult', name: 'Person', h: 1.7 },
-  { id: 'elephant', art: 'elephant', name: 'Elephant', h: 3.2 },
-  { id: 'giraffe', art: 'giraffe', name: 'Giraffe', h: 5.5 },
-  { id: 'house', art: 'house', name: 'House', h: 9 },
-  { id: 'whale', art: 'whale', name: 'Blue whale, on its tail', h: 25 },
-  { id: 'arc', art: 'arc', name: 'Arc de Triomphe', h: 50 },
-  { id: 'liberty', art: 'liberty', name: 'Statue of Liberty', h: 93 },
-  { id: 'pyramid', art: 'pyramid', name: 'Great Pyramid', h: 139 },
-  { id: 'eiffel', art: 'eiffel', name: 'Eiffel Tower', h: 330 },
-  { id: 'empire', art: 'empire', name: 'Empire State Building', h: 443 },
-  { id: 'burj', art: 'burj', name: 'Burj Khalifa', h: 828 },
-  { id: 'fuji', art: 'fuji', name: 'Mount Fuji', h: 3776, backdrop: -0.62 },
-  { id: 'everest', art: 'everest', name: 'Mount Everest', h: 8849, backdrop: 0.1 },
+  { id: 'radiolaria', name: 'Radiolarian', credit: 'Ernst Haeckel, 1904', h: 2.4e-4, size: '0.2 mm across' },
+  { id: 'flea', name: 'Flea', credit: 'Robert Hooke, 1665', w: 2.6e-3, size: '2.5 mm long' },
+  { id: 'ant', name: 'Ant', credit: 'Robert Hooke, 1665', h: 6e-3, size: '5 mm long' },
+  { id: 'blueberry', name: 'Blueberries', credit: 'USDA watercolour, 1912', w: 0.045, size: '4 cm cluster' },
+  { id: 'cat', name: 'House cat', credit: 'Jacques de Sève, 1755', h: 0.5, size: '30 cm tall' },
+  { id: 'vitruvian', name: 'Person', credit: 'Leonardo da Vinci, c.1490', h: 2.25, size: '1.8 m tall' },
+  { id: 'elephant', name: 'Elephant', credit: 'Jacques de Sève, 1762', h: 4.6, size: '3.2 m tall' },
+  { id: 'whale', name: 'Blue whale', credit: 'Thomas Bell, 1874', w: 26, size: '25 m long' },
+  { id: 'pyramids', name: 'Great Pyramid of Giza', credit: 'Description de l’Égypte, 1809', w: 560, size: '139 m tall', backdrop: 0.18 },
+  { id: 'matterhorn', name: 'The Matterhorn', credit: 'Edward Whymper, 1871', h: 5200, size: '4,478 m', backdrop: -0.18 },
 ];
 
 // ---------- altitude markers (horizontal guide lines) ----------
 
 export interface Marker {
   id: string;
-  icon: string;
   name: string;
   alt: number;
-  color?: string;
+  img?: string;
 }
 
 export const MARKERS: Marker[] = [
-  { id: 'jet', icon: 'jet', name: 'Passenger jets', alt: 11000 },
-  { id: 'skydive', icon: 'skydiver', name: 'Highest skydive ever', alt: 41400 },
-  { id: 'karman', icon: 'rocket', name: 'Edge of space', alt: 100000, color: '#9fd0ff' },
-  { id: 'aurora', icon: 'aurora', name: 'Northern lights', alt: 200000, color: '#7cf2b4' },
-  { id: 'iss', icon: 'iss', name: 'International Space Station', alt: 408000 },
-  { id: 'hubble', icon: 'telescope', name: 'Hubble Space Telescope', alt: 535000 },
-  { id: 'gps', icon: 'satellite', name: 'GPS satellites', alt: 20200e3 },
-  { id: 'geo', icon: 'satellite', name: 'Geostationary orbit', alt: 35786e3 },
-  { id: 'moon', icon: 'moon', name: 'The Moon', alt: MOON_ALT, color: '#f3f0e6' },
-  { id: 'mars', icon: 'planet', name: 'Mars, at its closest', alt: 5.46e10, color: '#ff8a5c' },
-  { id: 'sun', icon: 'sun', name: 'The Sun', alt: 1.496e11, color: '#ffd166' },
-  { id: 'jupiter', icon: 'ringed', name: 'Jupiter, at its closest', alt: 5.88e11, color: '#e8c7a0' },
-  { id: 'neptune', icon: 'planet', name: 'Neptune', alt: 4.3e12, color: '#6fa8ff' },
-  { id: 'voyager', icon: 'probe', name: 'Voyager 1, the farthest human-made object', alt: 2.53e13, color: '#cfd8e8' },
-  { id: 'ly', icon: 'ruler', name: 'One light-year', alt: LY },
-  { id: 'proxima', icon: 'star', name: 'Proxima Centauri, nearest star', alt: 4.24 * LY, color: '#ff9f80' },
-  { id: 'mwcenter', icon: 'galaxy', name: 'Centre of the Milky Way', alt: 26000 * LY, color: '#ffe1b0' },
-  { id: 'mwacross', icon: 'galaxy', name: 'Width of the Milky Way', alt: 100000 * LY, color: '#c9d4ff' },
-  { id: 'andromeda', icon: 'galaxy', name: 'Andromeda Galaxy', alt: 2.5e6 * LY, color: '#d6c9ff' },
-  { id: 'virgo', icon: 'galaxy', name: 'Virgo Cluster, 1,300+ galaxies', alt: 5.4e7 * LY, color: '#c9d4ff' },
-  { id: 'edge', icon: 'universe', name: 'Edge of the observable universe', alt: 4.65e10 * LY, color: '#ffffff' },
+  { id: 'everest', name: 'Summit of Mount Everest', alt: 8849 },
+  { id: 'jet', name: 'Passenger jets cruise', alt: 11000 },
+  { id: 'skydive', name: 'Highest skydive ever', alt: 41400 },
+  { id: 'karman', name: 'Kármán line, where space begins', alt: 100000 },
+  { id: 'iss', name: 'International Space Station', alt: 408000 },
+  { id: 'hubble', name: 'Hubble Space Telescope', alt: 535000 },
+  { id: 'gps', name: 'GPS satellites', alt: 20200e3 },
+  { id: 'geo', name: 'Geostationary orbit', alt: 35786e3 },
+  { id: 'moon', name: 'The Moon', alt: MOON_ALT },
+  { id: 'mars', name: 'Mars, at its closest', alt: 5.46e10, img: 'mars' },
+  { id: 'sun', name: 'The Sun', alt: SUN_ALT },
+  { id: 'jupiter', name: 'Jupiter, at its closest', alt: 5.88e11, img: 'jupiter' },
+  { id: 'saturn', name: 'Saturn, at its closest', alt: 1.2e12, img: 'saturn' },
+  { id: 'comet', name: 'Halley’s Comet, at its farthest', alt: 5.25e12, img: 'comet' },
+  { id: 'voyager', name: 'Voyager 1, farthest human-made object', alt: 2.53e13 },
+  { id: 'ly', name: 'One light year', alt: LY },
+  { id: 'proxima', name: 'Proxima Centauri, the nearest star', alt: 4.24 * LY },
+  { id: 'orion', name: 'Orion Nebula', alt: 1344 * LY, img: 'orion' },
+  { id: 'mwcenter', name: 'Centre of the Milky Way', alt: 26000 * LY },
+  { id: 'mwacross', name: 'Width of the Milky Way', alt: 100000 * LY },
+  { id: 'andromeda', name: 'Andromeda Galaxy', alt: 2.5e6 * LY },
+  { id: 'virgo', name: 'Virgo Cluster', alt: 5.4e7 * LY },
+  { id: 'edge', name: 'Edge of the observable universe', alt: 4.65e10 * LY },
 ];
 
 // ---------- the story ----------
@@ -149,38 +144,38 @@ export interface Fact {
 }
 
 const F: Record<number, Fact> = {
-  0: { text: 'A single sheet of paper, magnified 5,000 times. It is 0.1 mm thick, a little thicker than a human hair.' },
+  0: { text: 'A single sheet of paper, magnified 5,000 times. It’s about as thick as a human hair.' },
   1: { text: 'Two layers. Hard to see, but it has doubled.' },
-  2: { text: 'Four layers. Thicker than a grain of salt now.' },
+  2: { text: 'Four layers. Taller than a radiolarian, a tiny ocean creature.' },
   3: { text: 'Eight layers. About as thick as a credit card.' },
   4: { text: 'Sixteen layers. Each fold doubles everything that came before it.' },
-  5: { text: 'As tall as an ant. Thirty-two layers deep.' },
+  5: { text: 'As long as a flea. Thirty-two layers deep.' },
   6: { text: 'Most people say paper can only be folded 7 times. Let’s see.' },
-  7: { tag: 'The “7 fold limit”', text: 'It’s a myth, but a stubborn one. Real paper gets brutally stiff around here.' },
-  8: { text: 'Taller than a coin standing on its edge.' },
-  9: { text: 'Taller than a golf ball. 512 layers.' },
-  10: { text: '1,024 layers. As tall as a coffee mug.' },
+  7: { tag: 'The 7-fold myth', text: 'It’s a myth, but a stubborn one. Real paper gets brutally stiff around here.' },
+  8: { text: '256 layers. As tall as a stack of 16 coins.' },
+  9: { text: 'Taller than a sprig of blueberries.' },
+  10: { text: '1,024 layers, about the height of a coffee mug.' },
   11: { text: 'About the height of a sitting cat.' },
   12: { tag: 'World record', text: 'In 2002, high-schooler Britney Gallivan folded a 1.2 km strip of paper 12 times. Nobody has gone further. Everything after this is imagination.' },
   13: { text: 'As tall as a toddler.' },
   14: { text: 'About as tall as you. 16,384 layers of paper.' },
   15: { text: 'Taller than an elephant.' },
-  16: { text: 'A giraffe would have to look up.' },
-  17: { text: 'Taller than a two-storey house.' },
+  16: { text: 'Taller than a giraffe.' },
+  17: { text: 'Taller than a four-storey building.' },
   18: { text: 'As tall as a blue whale is long.' },
   19: { text: 'Taller than the Arc de Triomphe.' },
   20: { tag: 'A million layers', text: '1,048,576 sheets, stacked taller than the Statue of Liberty.' },
-  21: { text: 'You just passed the Great Pyramid of Giza.' },
-  22: { text: 'Taller than the Eiffel Tower and the Empire State Building.' },
+  21: { text: 'Taller than the Great Pyramid of Giza.' },
+  22: { text: 'Taller than the Eiffel Tower.' },
   23: { tag: 'Tallest building', text: 'Taller than the Burj Khalifa, the tallest building on Earth.' },
   24: { text: 'Your paper is poking into the clouds.' },
   25: { text: 'Laid flat, it would take you 40 minutes to walk its length.' },
-  26: { text: 'Taller than Mount Fuji.' },
+  26: { text: 'Taller than the Matterhorn.' },
   27: { tag: 'Top of the world', text: 'Higher than Mount Everest, and higher than airliners fly.' },
   28: { text: 'The sky is turning dark. 268 million layers.' },
   29: { text: 'Higher than the highest skydive ever made, from 41 km.' },
   30: { tag: 'Space', text: 'You’ve crossed the Kármán line. Your stack of paper is officially in space.' },
-  31: { text: 'The northern lights shimmer around this height.' },
+  31: { text: 'The northern lights shimmer at around this height.' },
   32: { text: 'Astronauts on the Space Station could wave at your paper.' },
   33: { text: 'Higher than the Hubble Space Telescope.' },
   34: { text: 'If it tipped over, it would stretch from London to Rome.' },
@@ -191,23 +186,25 @@ const F: Record<number, Fact> = {
   39: { text: 'Past geostationary orbit, where weather satellites hover.' },
   40: { tag: 'A trillion layers', text: '1,099,511,627,776 sheets. Over a quarter of the way to the Moon.' },
   41: { text: 'More than halfway there. One more fold…' },
-  42: { tag: 'The Moon', text: 'You made it. A single sheet of paper, folded 42 times, reaches past the Moon.' },
-  43: { text: 'Twice the distance to the Moon. Let’s keep going.' },
+  42: { tag: 'The Moon', text: 'A single sheet of paper, folded 42 times, reaches past the Moon.' },
+  43: { text: 'Twice the distance to the Moon. Keep going.' },
   49: { tag: 'Mars', text: 'Past Mars at its closest approach to Earth.' },
-  51: { tag: 'The Sun', text: 'Past the Sun. 51 folds.' },
+  51: { tag: 'The Sun', text: 'Past the Sun. Fifty-one folds.' },
   53: { text: 'Past Jupiter.' },
-  56: { text: 'Past Neptune, the outermost planet.' },
+  54: { text: 'Past Saturn and its rings.' },
+  56: { text: 'Past Neptune, and past the farthest point of Halley\u2019s Comet\u2019s orbit.' },
   58: { tag: 'Voyager 1', text: 'Past Voyager 1, launched in 1977 and still the farthest thing humans have ever made.' },
   60: { text: 'A quintillion layers. That’s a 1 with 18 zeros.' },
-  67: { tag: 'One light-year', text: 'Light itself needs a full year to climb your paper.' },
+  67: { tag: 'One light year', text: 'Light itself needs a full year to climb your paper.' },
   69: { tag: 'Nearest star', text: 'Past Proxima Centauri, our closest neighbouring star.' },
+  77: { text: 'Past the Orion Nebula, a nursery where new stars are born.' },
   78: { text: 'Past almost every star you can see with the naked eye.' },
   82: { tag: 'Galactic centre', text: 'All the way to the black hole at the centre of the Milky Way.' },
   83: { tag: 'The Milky Way', text: 'Taller than our entire galaxy is wide.' },
-  88: { tag: 'Andromeda', text: 'Past the Andromeda Galaxy, 2.5 million light-years away.' },
+  88: { tag: 'Andromeda', text: 'Past the Andromeda Galaxy, 2.5 million light years away.' },
   93: { text: 'Past the Virgo Cluster and its thousand-plus galaxies.' },
   100: { text: 'Fold 100. There are now more layers of paper than atoms in your body.' },
-  102: { tag: 'The end', text: 'Your paper is now taller than the observable universe. From one sheet. 102 folds.' },
+  102: { tag: 'The end', text: 'Your paper is now taller than the observable universe. From one sheet, folded 102 times.' },
 };
 
 export function factFor(n: number): Fact {
@@ -217,23 +214,15 @@ export function factFor(n: number): Fact {
   return { text: '' };
 }
 
-/** Milestones for the progress rail. */
+/** Milestones for the altimeter rail. */
 export const RAIL: { name: string; m: number }[] = [
   { name: 'Hair', m: 7e-5 },
-  { name: 'Coin', m: 0.024 },
+  { name: 'Ant', m: 0.005 },
   { name: 'You', m: 1.7 },
-  { name: 'Burj', m: 828 },
   { name: 'Everest', m: 8849 },
-  { name: 'Space', m: 1e5 },
   { name: 'Moon', m: MOON_ALT },
-];
-
-export const RAIL_DEEP: { name: string; m: number }[] = [
-  { name: 'Moon', m: MOON_ALT },
-  { name: 'Sun', m: 1.496e11 },
-  { name: 'Voyager', m: 2.53e13 },
-  { name: 'Stars', m: 4.24 * LY },
-  { name: 'Galaxy', m: 1e5 * LY },
+  { name: 'Sun', m: SUN_ALT },
+  { name: 'Star', m: 4.24 * LY },
   { name: 'Andromeda', m: 2.5e6 * LY },
   { name: 'Universe', m: 4.65e10 * LY },
 ];

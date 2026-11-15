@@ -1,0 +1,102 @@
+{
+ "radiolaria": {
+  "w": 1200,
+  "h": 1028,
+  "mode": "paper"
+ },
+ "flea": {
+  "w": 1400,
+  "h": 1059,
+  "mode": "paper"
+ },
+ "ant": {
+  "w": 831,
+  "h": 1400,
+  "mode": "paper"
+ },
+ "blueberry": {
+  "w": 826,
+  "h": 901,
+  "mode": "paper"
+ },
+ "cat": {
+  "w": 1400,
+  "h": 962,
+  "mode": "paper"
+ },
+ "vitruvian": {
+  "w": 760,
+  "h": 793,
+  "mode": "paper"
+ },
+ "elephant": {
+  "w": 1400,
+  "h": 992,
+  "mode": "paper"
+ },
+ "whale": {
+  "w": 1040,
+  "h": 338,
+  "mode": "paper"
+ },
+ "pyramids": {
+  "w": 1800,
+  "h": 637,
+  "mode": "paper"
+ },
+ "matterhorn": {
+  "w": 1472,
+  "h": 1320,
+  "mode": "paper"
+ },
+ "moon": {
+  "w": 587,
+  "h": 588,
+  "mode": "dark"
+ },
+ "jupiter": {
+  "w": 399,
+  "h": 400,
+  "mode": "dark"
+ },
+ "mars": {
+  "w": 400,
+  "h": 399,
+  "mode": "dark"
+ },
+ "saturn": {
+  "w": 500,
+  "h": 214,
+  "mode": "dark"
+ },
+ "sun": {
+  "w": 1070,
+  "h": 751,
+  "mode": "dark"
+ },
+ "aurora": {
+  "w": 1059,
+  "h": 648,
+  "mode": "dark"
+ },
+ "milkyway": {
+  "w": 1400,
+  "h": 1390,
+  "mode": "dark"
+ },
+ "orion": {
+  "w": 500,
+  "h": 428,
+  "mode": "dark"
+ },
+ "andromeda": {
+  "w": 569,
+  "h": 371,
+  "mode": "dark"
+ },
+ "comet": {
+  "w": 273,
+  "h": 500,
+  "mode": "dark"
+ }
+}
