@@ -144,6 +144,7 @@ canvas,
 .backdrop .tag {
   bottom: auto;
   top: 6%;
+  left: 66%;
 }
 
 .backdrop .tag::after {

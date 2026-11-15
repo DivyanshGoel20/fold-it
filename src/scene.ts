@@ -261,10 +261,12 @@ export class Scene {
     b.fillStyle = '#03050d';
     b.fillRect(0, 0, W, H);
 
-    // how dark is the top of the screen?
-    const altTop = (g0 - 0) / cam.scale;
-    this.darkness = 1 - skyAt(altTop)[3] * (flat || Rpx > 3000 ? 1 : 0);
-    if (g0 < 0) this.darkness = 1;
+    // how dark is the sky behind the counter (top of the screen)?
+    const altTop = (g0 - 90) / cam.scale;
+    const c = skyAt(altTop);
+    const lum = ((0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255) * c[3];
+    this.darkness = clamp(1 - lum / 0.55);
+    if (g0 < 90) this.darkness = 1;
 
     // stars
     if (this.darkness > 0.02) {
