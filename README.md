@@ -1,18 +1,24 @@
 # Fold It
 
-A sheet of paper is 0.1 mm thick. Fold it in half, then again, and again. How many folds until it reaches the Moon?
+A sheet of paper is 0.1 mm thick. Fold it in half, then again, and again. How far does it go?
 
-Fold It is an interactive web toy about exponential growth. Every fold doubles the stack. The camera keeps zooming out, so you watch the paper grow from microscope scale, past ants, people, skyscrapers, Everest and the edge of space, all the way to the Moon at fold 42. If you keep going, it reaches the edge of the observable universe at fold 102.
+Fold It is a scroll-driven web piece about exponential growth. Each scroll step folds the paper once. The camera zooms out with each fold: from the paper's fibres at 5,000× magnification, past fleas and elephants, the pyramids and the Matterhorn, into space, past the Moon (fold 42), the planets, the stars, and finally the edge of the observable universe (fold 102). Scrolling back up unfolds the paper.
 
-## Features
+## Art
 
-- A continuous zoom from 5,000× magnification out to billions of light years, built on a single log-scale camera
-- A real fold animation in side view: the right half swings over the hinge and lands on top
-- Around 30 hand-drawn SVG objects shown at true scale, plus altitude markers (jets, ISS, GPS, the Moon, Voyager, Andromeda…)
-- A sky that darkens with altitude, a curved Earth, the Moon, the Sun, the Milky Way and the observable universe
-- Every sound is synthesised live with the Web Audio API: paper whoosh, landing thump, milestone chimes, and a space ambience
-- Guess the number of folds first, then see how far off you were
-- Space or click to fold, hold to keep folding, ← to unfold, M to mute
+Every illustration is a public-domain or CC0 work from Wikimedia Commons:
+
+- Robert Hooke's *Micrographia* (1665): the flea and the ant
+- Ernst Haeckel's *Kunstformen der Natur* (1904): a radiolarian
+- USDA Pomological Watercolors: blueberries
+- Jacques de Sève's drawings for Buffon (1755–62): the cat and the elephant
+- Leonardo da Vinci: the Vitruvian Man
+- *Description de l'Égypte* (1809): the pyramids
+- Edward Whymper, *Scrambles Amongst the Alps* (1871): the Matterhorn
+- Étienne Léopold Trouvelot's astronomical drawings (1881): the Moon, Sun, planets, aurora, Milky Way, Orion Nebula and comet
+- Isaac Roberts' photograph of Andromeda (1899)
+
+The scans are cropped and normalised so that paper becomes white and sky becomes black. They're then drawn with `multiply` or `screen` blending, which lets them sit directly on the page. The site's info panel lists the source pages.
 
 ## Run it
 
@@ -22,4 +28,4 @@ npm run dev      # http://127.0.0.1:5180
 npm run build    # static site in dist/
 ```
 
-Built with Vite + TypeScript, with no framework. Rendering uses two canvases plus a DOM layer for the crisp SVG illustrations.
+Built with Vite + TypeScript, with no framework. Two canvases draw the sky, the Earth and the folding paper, and a DOM layer holds the plates and labels.

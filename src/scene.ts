@@ -196,19 +196,21 @@ export class Scene {
     };
     body('aurora', () => {
       const h = 300e3 * this.cam.scale, w = h * ar('aurora');
-      const a = smooth(30, 90, h) * (1 - smooth(this.H * 1.4, this.H * 3, h));
+      const a = smooth(30, 90, h) * (1 - smooth(this.H * 0.7, this.H * 1.2, h));
       return { x: this.cx - w / 2, y: this.sy(380e3), w, h, a: a * 0.9 };
     });
     body('moon', () => {
       // the moon plate is a disc filling MOON_FILL of its square image
-      const d = Math.max(MOON_R * 2 * this.cam.scale, 5) / MOON_FILL;
+      const R = MOON_R * this.cam.scale;
+      const d = Math.max(R * 2, 9) / MOON_FILL;
       const x = this.cx + this.bodyX(MOON_R, 1.25);
-      return { x: x - d / 2, y: this.sy(MOON_ALT) - d / 2, w: d, h: d, a: 1 };
+      return { x: x - d / 2, y: this.sy(MOON_ALT) - d / 2, w: d, h: d, a: smooth(0.15, 1, R) };
     });
     body('sun', () => {
-      const d = Math.max(SUN_R * 2 * this.cam.scale, 7) / SUN_FILL;
+      const R = SUN_R * this.cam.scale;
+      const d = Math.max(R * 2, 8) / SUN_FILL;
       const x = this.cx + this.bodyX(SUN_R, 1.6);
-      return { x: x - d / 2, y: this.sy(SUN_ALT) - d / 2, w: d, h: d / ar('sun'), a: 1 };
+      return { x: x - d / 2, y: this.sy(SUN_ALT) - d / 2 / ar('sun'), w: d, h: d / ar('sun'), a: smooth(0.4, 2, R) };
     });
     body('milkyway', () => {
       const d = 1.2e5 * LY * this.cam.scale;
@@ -482,13 +484,12 @@ export class Scene {
         b.moveTo(x + px * w + r * w, y + py * w);
         b.arc(x + px * w, y + py * w, r * w, 0, Math.PI * 2);
       }
-      b.globalAlpha = a * 0.92;
-      b.fillStyle = '#fbf7ee';
+      b.globalAlpha = a * 0.85;
+      b.fillStyle = '#fbf8f1';
       b.fill();
-      b.globalAlpha = a * 0.3;
-      b.strokeStyle = '#5a4a36';
-      b.lineWidth = 0.8;
-      b.stroke();
+      b.globalAlpha = a * 0.18;
+      b.fillStyle = '#8a7a62';
+      b.fillRect(x - w * 0.4, y - 1, w * 0.8, 1);
     }
     b.globalAlpha = 1;
   }
@@ -606,7 +607,7 @@ export class Scene {
       const wp = te.w * s;
       const back = te.t.backdrop !== undefined;
       let a = back
-        ? smooth(10, 40, hp) * (1 - smooth(H * 0.8, H * 1.4, hp))
+        ? smooth(40, 90, hp) * (1 - smooth(H * 0.5, H * 0.85, hp))
         : smooth(14, 36, hp) * (1 - smooth(H * 0.42, H * 0.68, hp));
       if (g0 - hp > H || g0 < -10) a = 0;
       this.show(te, a > 0.003);

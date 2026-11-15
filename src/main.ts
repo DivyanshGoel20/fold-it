@@ -170,7 +170,10 @@ function frame(now: number) {
   if (Math.abs(fr.thick - thickDisp) < 0.001) thickDisp = fr.thick;
   const w = fmtWords(PAPER_T * Math.pow(2, thickDisp));
   if (ui.tv.textContent !== w.v) ui.tv.textContent = w.v;
-  if (ui.tu.textContent !== w.u) ui.tu.textContent = w.u;
+  if (ui.tu.textContent !== w.u) {
+    ui.tu.textContent = w.u;
+    ui.head.classList.toggle('long', w.u.length > 12);
+  }
 
   const p = clamp((Math.log10(PAPER_T * Math.pow(2, thickDisp)) - RAIL_LO) / (RAIL_HI - RAIL_LO));
   ui.railFill.style.transform = `scaleY(${p})`;
