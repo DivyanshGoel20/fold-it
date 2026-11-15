@@ -185,8 +185,8 @@ export class Scene {
       this.deep.appendChild(el);
       this.bodies.push({ el, x, y, d, shown: false });
     };
-    addBody(GALAXY_SVG, -2.6e4 * LY, 0, 1e5 * LY, 'The Milky Way');
-    addBody(ANDROMEDA_SVG, 4e5 * LY, 2.5e6 * LY, 2.2e5 * LY, 'Andromeda');
+    addBody(GALAXY_SVG, 0, 2.6e4 * LY, 1e5 * LY, 'The Milky Way');
+    addBody(ANDROMEDA_SVG, 1.4e5 * LY, 2.5e6 * LY, 2.2e5 * LY, 'Andromeda');
   }
 
   resize() {
@@ -202,10 +202,13 @@ export class Scene {
   }
 
   get baseline() {
-    return this.H * (this.W < 640 ? 0.74 : 0.8);
+    const dock = this.W < 640 ? 196 : 236;
+    return Math.max(this.H * 0.62, Math.min(this.H * 0.8, this.H - dock));
   }
   get towerFrac() {
-    return this.W < 640 ? 0.4 : 0.47;
+    // leave room for the counter above the tower
+    const top = this.W < 640 ? 150 : 190;
+    return Math.min(0.5, (this.baseline - top - 30) / this.H);
   }
   get minW() {
     return this.W < 640 ? 16 : 22;
@@ -217,8 +220,8 @@ export class Scene {
   }
 
   moonCam(): Cam {
-    const s = (Math.min(this.W, this.H) * 0.17) / MOON_R;
-    return { scale: s, ay: MOON_ALT, sy: this.H * 0.47, ox: -MOON_R * 1.15 * s * 0.55 };
+    const s = (Math.min(this.W, this.H) * (this.W < 640 ? 0.2 : 0.13)) / MOON_R;
+    return { scale: s, ay: MOON_ALT, sy: this.H * (this.W < 640 ? 0.36 : 0.33), ox: -MOON_R * 1.15 * s * 0.55 };
   }
 
   sy(y: number, cam = this.cam) {
@@ -267,7 +270,7 @@ export class Scene {
     if (this.darkness > 0.02) {
       const z = Math.log2(cam.scale);
       const maxR = Math.hypot(W, H) * 0.62;
-      const minR = 20;
+      const minR = maxR * 0.1;
       b.fillStyle = '#fff';
       for (const s of this.stars) {
         let u = (s.u + z * 0.07) % 1;
@@ -275,7 +278,7 @@ export class Scene {
         const r = minR * Math.pow(maxR / minR, u);
         const x = W / 2 + Math.cos(s.a) * r * 1.2;
         const y = H * 0.45 + Math.sin(s.a) * r;
-        const fade = smooth(0, 0.15, u) * (1 - smooth(0.92, 1, u));
+        const fade = smooth(0, 0.3, u) * (1 - smooth(0.9, 1, u));
         const tw = 0.75 + 0.25 * Math.sin(time * 0.0015 + s.tw);
         b.globalAlpha = fade * tw * this.darkness * 0.95;
         b.beginPath();
@@ -491,10 +494,10 @@ export class Scene {
   private drawClouds(cx: number, g0: number) {
     const b = this.b;
     const s = this.cam.scale;
-    if (s * 300 > 6000 || s * 1800 < 14) return;
+    if (s * 300 > 1100 || s * 1800 < 14) return;
     for (const c of this.clouds) {
       const w = c.w * s;
-      const a = smooth(14, 40, w) * (1 - smooth(1800, 5000, w));
+      const a = smooth(14, 40, w) * (1 - smooth(500, 1100, w));
       if (a <= 0) continue;
       const x = cx + c.x * s;
       const y = g0 - c.y * s;
@@ -507,8 +510,6 @@ export class Scene {
         b.arc(x + px * w, y + py * w, r * w, 0, Math.PI * 2);
       }
       b.fill();
-      b.fillStyle = 'rgba(170,195,225,0.35)';
-      b.fillRect(x - w * 0.42, y - w * 0.02, w * 0.84, w * 0.03);
     }
     b.globalAlpha = 1;
   }
@@ -694,8 +695,8 @@ export class Scene {
       const wp = hp * te.ratio;
       const back = te.t.backdrop !== undefined;
       let a = back
-        ? smooth(10, 30, hp) * (1 - smooth(H * 1.6, H * 2.6, hp))
-        : smooth(12, 30, hp) * (1 - smooth(H * 1.15, H * 1.75, hp));
+        ? smooth(10, 30, hp) * (1 - smooth(H * 0.75, H * 1.3, hp))
+        : smooth(12, 30, hp) * (1 - smooth(H * 0.55, H * 0.82, hp));
       if (g0 - hp > H || g0 < -10) a = 0;
       if (a <= 0.003) {
         if (te.shown) {
@@ -705,7 +706,7 @@ export class Scene {
         continue;
       }
       if (!te.shown) {
-        te.el.style.display = '';
+        te.el.style.display = 'block';
         te.shown = true;
       }
       let x: number;
@@ -737,7 +738,7 @@ export class Scene {
         continue;
       }
       if (!me.shown) {
-        me.el.style.display = '';
+        me.el.style.display = 'block';
         me.shown = true;
       }
       me.el.style.transform = `translate3d(0, ${y}px, 0)`;
@@ -756,7 +757,7 @@ export class Scene {
         continue;
       }
       if (!bd.shown) {
-        bd.el.style.display = '';
+        bd.el.style.display = 'block';
         bd.shown = true;
       }
       const x = cx + bd.x * s - d / 2;

@@ -209,7 +209,7 @@ function showFinale(kind: 'moon' | 'end') {
       verdict = x >= 3 ? `That’s ${Math.round(x).toLocaleString('en-US')}× too many. Almost everyone guesses way too high, because doubling is sneaky.` : `Close, but too high. Doubling gets away from you fast.`;
     } else verdict = g >= MOON_FOLD - 6 ? 'Close, but too low.' : 'Too low. Even doubling needs a little time to get going.';
     ui.fGuess.innerHTML = `<span>Your guess</span><b>${g.toLocaleString('en-US')}</b><em>${verdict}</em>`;
-    ui.fGo.textContent = 'Keep folding to the edge of the universe';
+    ui.fGo.innerHTML = 'Keep folding <span aria-hidden="true">→</span>';
     ui.fGo.style.display = '';
   } else {
     ui.fTag.textContent = `Fold ${MAX_FOLD}`;
@@ -219,11 +219,15 @@ function showFinale(kind: 'moon' | 'end') {
     ui.fGo.style.display = 'none';
   }
   ui.finale.hidden = false;
+  document.body.classList.add('finale-open');
+  $('fShare').classList.toggle('primary', kind === 'end');
+  $('fShare').classList.toggle('ghost', kind !== 'end');
   requestAnimationFrame(() => ui.finale.classList.add('show'));
   st.mode = 'finale';
 }
 
 function hideFinale() {
+  document.body.classList.remove('finale-open');
   ui.finale.classList.remove('show');
   window.setTimeout(() => (ui.finale.hidden = true), 400);
 }

@@ -34,7 +34,7 @@ const sig = (v: number, digits = 3) => {
 
 export function fmtLen(m: number): { v: string; u: string } {
   if (m < 1e-6) return { v: sig(m * 1e9), u: 'nm' };
-  if (m < 1e-3) return { v: sig(m * 1e6), u: 'µm' };
+  if (m < 9e-5) return { v: sig(m * 1e6), u: 'µm' };
   if (m < 0.01) return { v: sig(m * 1e3, 2), u: 'mm' };
   if (m < 1) return { v: sig(m * 100), u: 'cm' };
   if (m < 1000) return { v: sig(m), u: 'm' };
@@ -42,10 +42,10 @@ export function fmtLen(m: number): { v: string; u: string } {
   if (m < 1e12) return { v: sig(m / 1e9), u: 'million km' };
   if (m < 1e14) return { v: sig(m / 1e12), u: 'billion km' };
   const ly = m / LY;
-  if (ly < 1000) return { v: sig(ly), u: ly < 1.5 ? 'light-year' : 'light-years' };
-  if (ly < 1e6) return { v: sig(ly / 1e3), u: 'thousand light-years' };
-  if (ly < 1e9) return { v: sig(ly / 1e6), u: 'million light-years' };
-  return { v: sig(ly / 1e9), u: 'billion light-years' };
+  if (ly < 1000) return { v: sig(ly), u: ly < 1.5 ? 'light year' : 'light years' };
+  if (ly < 1e6) return { v: sig(ly / 1e3), u: 'thousand light years' };
+  if (ly < 1e9) return { v: sig(ly / 1e6), u: 'million light years' };
+  return { v: sig(ly / 1e9), u: 'billion light years' };
 }
 
 export const fmt = (m: number) => {
@@ -135,7 +135,7 @@ export const MARKERS: Marker[] = [
   { id: 'ly', icon: 'ruler', name: 'One light-year', alt: LY },
   { id: 'proxima', icon: 'star', name: 'Proxima Centauri, nearest star', alt: 4.24 * LY, color: '#ff9f80' },
   { id: 'mwcenter', icon: 'galaxy', name: 'Centre of the Milky Way', alt: 26000 * LY, color: '#ffe1b0' },
-  { id: 'mwacross', icon: 'galaxy', name: 'All the way across the Milky Way', alt: 100000 * LY, color: '#c9d4ff' },
+  { id: 'mwacross', icon: 'galaxy', name: 'Width of the Milky Way', alt: 100000 * LY, color: '#c9d4ff' },
   { id: 'andromeda', icon: 'galaxy', name: 'Andromeda Galaxy', alt: 2.5e6 * LY, color: '#d6c9ff' },
   { id: 'virgo', icon: 'galaxy', name: 'Virgo Cluster, 1,300+ galaxies', alt: 5.4e7 * LY, color: '#c9d4ff' },
   { id: 'edge', icon: 'universe', name: 'Edge of the observable universe', alt: 4.65e10 * LY, color: '#ffffff' },

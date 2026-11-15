@@ -21,6 +21,10 @@ body.dark {
   --shadow: 0 12px 48px -12px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -907,8 +911,8 @@ kbd {
 }
 
 .finale-card {
-  width: min(560px, 100%);
-  padding: 28px 28px 24px;
+  width: min(540px, 100%);
+  padding: 24px 26px 22px;
   border-radius: 28px;
   text-align: center;
   color: #f4f6ff;
@@ -941,7 +945,7 @@ kbd {
   margin: 12px 0 8px;
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(40px, 7vw, 58px);
+  font-size: clamp(38px, 6vw, 52px);
   line-height: 1;
   letter-spacing: -0.025em;
 }
@@ -1090,4 +1094,20 @@ kbd {
   .sd-stage {
     animation: none;
   }
+}
+
+body.finale-open .dock,
+body.finale-open .counter {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dock,
+.counter {
+  transition: opacity 0.5s var(--ease);
+}
+
+.f-actions .primary,
+.f-actions .ghost {
+  height: 52px;
 }
