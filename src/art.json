@@ -98,5 +98,20 @@
   "w": 273,
   "h": 500,
   "mode": "dark"
+ },
+ "whirlpool": {
+  "w": 700,
+  "h": 532,
+  "mode": "dark"
+ },
+ "meteors": {
+  "w": 736,
+  "h": 734,
+  "mode": "dark"
+ },
+ "hercules": {
+  "w": 600,
+  "h": 536,
+  "mode": "dark"
  }
 }

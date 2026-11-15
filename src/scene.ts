@@ -66,7 +66,7 @@ const SEA_HI = [126, 160, 168];
 const SEA_LO = [38, 66, 84];
 
 interface ThingEl { t: Thing; el: HTMLElement; lbl: HTMLElement; w: number; h: number; side: number; shown: boolean }
-interface MarkerEl { m: Marker; el: HTMLElement; line: HTMLElement; shown: boolean }
+interface MarkerEl { m: Marker; el: HTMLElement; line: HTMLElement; shown: boolean; plate?: { el: HTMLElement; lbl: HTMLElement; mag: HTMLElement; shown: boolean } }
 interface BodyEl { el: HTMLElement; shown: boolean; place: () => { x: number; y: number; w: number; h: number; a: number } | null }
 
 export class Scene {
@@ -167,7 +167,8 @@ export class Scene {
       const el = this.img(t.id, 'thing' + (t.backdrop !== undefined ? ' backdrop' : ''));
       const lbl = document.createElement('div');
       lbl.className = 'lbl' + (t.backdrop !== undefined ? ' lbl-back' : '');
-      lbl.innerHTML = `<b>${t.name}</b><span>${t.size}</span><em>${t.credit}</em><i class="leader"></i>`;
+      lbl.innerHTML = `<i class="string"></i><span class="no">N\u00ba ${String(i + 1).padStart(2, '0')}</span><b>${t.name}</b><span class="sz">${t.size}</span><em>${t.credit}</em>`;
+      lbl.style.setProperty('--tilt', `${i % 2 ? 2.2 : -1.8}deg`);
       (t.backdrop !== undefined ? this.deep : this.things).appendChild(el);
       this.things.appendChild(lbl);
       this.thingEls.push({ t, el, lbl, w, h, side: i % 2 ? -1 : 1, shown: false });
@@ -176,10 +177,23 @@ export class Scene {
     MARKERS.forEach((m) => {
       const el = document.createElement('div');
       el.className = 'marker';
-      el.innerHTML = `<div class="mline"></div><div class="mlabel"><span class="malt">${fmt(m.alt)}</span><span class="mname">${m.name}</span></div>`;
-      if (m.img && art[m.img]) el.querySelector('.mlabel')!.prepend(this.img(m.img, 'minset'));
+      el.innerHTML = `<div class="mline"></div><div class="mlabel"><span class="mname">${m.name}</span><span class="malt">${fmt(m.alt)}</span></div>`;
       this.marks.appendChild(el);
-      this.markerEls.push({ m, el, line: el.querySelector('.mline')!, shown: false });
+      const me: MarkerEl = { m, el, line: el.querySelector('.mline')!, shown: false };
+      if ((m.img && art[m.img]) || m.star) {
+        const pl = document.createElement('div');
+        pl.className = 'plate screen';
+        const im = m.star ? starImage(m.star, !!m.cluster) : this.img(m.img!);
+        im.className = '';
+        pl.appendChild(im);
+        this.deep.appendChild(pl);
+        const lbl = document.createElement('div');
+        lbl.className = 'ptag';
+        lbl.innerHTML = `<b>${m.name.split(',')[0]}</b><span class="pmag"></span><em>${m.credit ?? ''}</em>`;
+        this.things.appendChild(lbl);
+        me.plate = { el: pl, lbl, mag: lbl.querySelector('.pmag')!, shown: false };
+      }
+      this.markerEls.push(me);
     });
 
     // celestial bodies, drawn at true scale
@@ -263,6 +277,11 @@ export class Scene {
     return { scale: s, ay: MOON_ALT, sy: this.H * 0.58, ox: -MOON_R * 1.25 * s * 0.5 };
   }
 
+  sunCam(): Cam {
+    const s = (Math.min(this.W, this.H) * (this.mobile ? 0.14 : 0.1)) / SUN_R;
+    return { scale: s, ay: SUN_ALT, sy: this.H * 0.56, ox: -SUN_R * 1.6 * s * 0.75 };
+  }
+
   sy(y: number, cam = this.cam) {
     return cam.sy - (y - cam.ay) * cam.scale;
   }
@@ -328,6 +347,7 @@ export class Scene {
       b.globalAlpha = 1;
     }
 
+    this.drawGalaxies(cx, g0);
     this.drawUniverse(cx, g0);
 
     // atmosphere
@@ -358,12 +378,38 @@ export class Scene {
       b.fillRect(0, 0, W, H);
     }
 
+    this.drawCreases();
     this.drawClouds(cx, g0);
 
     if (flat) {
       if (g0 < H) this.drawGround(g0);
     } else {
       this.drawEarth(cx, g0 + Rpx, Rpx);
+    }
+  }
+
+  /** The faint crease pattern of an unfolded sheet, printed on the page. */
+  creaseLevel = 0;
+  private drawCreases() {
+    const a = 1 - this.darkness;
+    if (a <= 0.02) return;
+    const { b, W, H } = this;
+    const lv = this.creaseLevel;
+    for (let i = 1; i <= 6; i++) {
+      const vis = clamp(lv - i + 1);
+      if (vis <= 0) break;
+      const vertical = i % 2 === 1;
+      const n = 1 << Math.ceil(i / 2);
+      const alpha = a * vis * (0.13 - i * 0.012);
+      for (let k = 1; k < n; k += 2) {
+        const p = Math.round(((vertical ? W : H) * k) / n);
+        b.fillStyle = `rgba(90,70,45,${alpha})`;
+        if (vertical) b.fillRect(p, 0, 1, H);
+        else b.fillRect(0, p, W, 1);
+        b.fillStyle = `rgba(255,255,255,${alpha * 3})`;
+        if (vertical) b.fillRect(p + 1, 0, 1, H);
+        else b.fillRect(0, p + 1, W, 1);
+      }
     }
   }
 
@@ -435,6 +481,45 @@ export class Scene {
     const show = R < 9 && cy > 0 && cy < this.H;
     this.earthTag.style.opacity = show ? String(1 - smooth(4, 9, R)) : '0';
     if (show) this.earthTag.style.transform = `translate(${cx - 6}px, ${cy + 8}px)`;
+  }
+
+  /** thousands of distant galaxies that fill the sky once we leave the Milky Way */
+  private galaxies: [number, number, number, number, number][] = [];
+  private drawGalaxies(cx: number, g0: number) {
+    const b = this.b;
+    const s = this.cam.scale;
+    if (1.5e5 * LY * s > 80 || 4e10 * LY * s < 20) return;
+    if (!this.galaxies.length) {
+      const r = rng(23);
+      for (let i = 0; i < 2600; i++) {
+        const d = Math.pow(10, 5.8 + r() * 4.9) * LY;
+        const a = r() * Math.PI * 2;
+        this.galaxies.push([Math.cos(a) * d, Math.sin(a) * d, (3e4 + r() * r() * 2e5) * LY, r() * Math.PI, r()]);
+      }
+    }
+    for (const [x, y, size, rot, hue] of this.galaxies) {
+      const px = cx + x * s, py = g0 - y * s;
+      if (px < -20 || px > this.W + 20 || py < -20 || py > this.H + 20) continue;
+      const r = size * s;
+      const a = (1 - smooth(25, 70, r)) * (0.55 + hue * 0.45);
+      if (a <= 0.01) continue;
+      const rr = Math.max(r, 1.1);
+      const g = b.createRadialGradient(px, py, 0, px, py, rr * 2.2);
+      const c = hue > 0.6 ? '255,214,170' : hue > 0.25 ? '230,228,255' : '190,205,255';
+      g.addColorStop(0, `rgba(${c},${0.85 * a})`);
+      g.addColorStop(0.35, `rgba(${c},${0.25 * a})`);
+      g.addColorStop(1, `rgba(${c},0)`);
+      b.save();
+      b.translate(px, py);
+      b.rotate(rot);
+      b.scale(1, 0.45 + hue * 0.5);
+      b.translate(-px, -py);
+      b.fillStyle = g;
+      b.beginPath();
+      b.arc(px, py, rr * 2.2, 0, Math.PI * 2);
+      b.fill();
+      b.restore();
+    }
   }
 
   private drawUniverse(cx: number, g0: number) {
@@ -586,6 +671,7 @@ export class Scene {
   // ---------- DOM overlays ----------
 
   private show(o: { el: HTMLElement; lbl?: HTMLElement; shown: boolean }, on: boolean) {
+    if (o === undefined) return;
     if (on === o.shown) return;
     o.el.style.display = on ? 'block' : 'none';
     if (o.lbl) o.lbl.style.display = on ? 'grid' : 'none';
@@ -631,15 +717,58 @@ export class Scene {
       te.lbl.style.opacity = String(a);
     }
 
+    const plateS = Math.round(Math.min(Math.max(Math.min(W, H) * (this.mobile ? 0.34 : 0.26), 130), 280));
+    const plates: { me: MarkerEl; y: number; pa: number }[] = [];
     for (const me of this.markerEls) {
       const ap = me.m.alt * s;
       const y = g0 - ap;
-      const a = smooth(22, 54, ap) * smooth(150, 230, y) * (1 - smooth(H - 40, H, y));
+      const a = smooth(22, 54, ap) * smooth(120, 200, y) * (1 - smooth(H - 40, H, y));
       this.show(me, a > 0.003);
+      if (me.plate) {
+        // once the real thing is drawn big enough, the magnified plate isn't needed
+        const real = me.m.d ? me.m.d * s : 0;
+        const pa = a * smooth(60, 140, ap) * (1 - smooth(plateS * 0.1, plateS * 0.3, real));
+        if (pa > 0.003) plates.push({ me, y, pa });
+        else this.show(me.plate, false);
+      }
       if (a <= 0.003) continue;
       me.el.style.transform = `translate3d(0, ${y}px, 0)`;
       me.el.style.opacity = String(a);
-      me.line.style.width = Math.max(0, cx - near - 10) + 'px';
+      const left = cx + near + 10;
+      me.line.style.left = left + 'px';
+      me.line.style.width = Math.max(0, W - left - (this.mobile ? 12 : 30)) + 'px';
+    }
+
+    // big plates beside the tower, in up to two columns so they never overlap
+    const S = plateS;
+    const cols = this.mobile
+      ? [cx - near - 8 - S]
+      : [cx - near - 60 - S, cx - near - 60 - S * 2 - 40].filter((x) => x > 20);
+    const taken: [number, number][][] = cols.map(() => []);
+    plates.sort((p, q) => p.y - q.y);
+    for (const { me, y, pa } of plates) {
+      let placed = false;
+      for (let c = 0; c < cols.length && !placed; c++) {
+        const top = clamp(y - S / 2, 140, H - S - (c === 1 || this.mobile ? 230 : 70));
+        const hit = taken[c].some(([t, b]) => top < b + 50 && top + S + 50 > t);
+        if (!hit) {
+          taken[c].push([top, top + S]);
+          const pl = me.plate!;
+          this.show(pl, true);
+          pl.el.style.width = S + 'px';
+          pl.el.style.height = S + 'px';
+          pl.el.style.transform = `translate3d(${cols[c]}px, ${top}px, 0)`;
+          pl.el.style.opacity = String(pa);
+          pl.lbl.style.transform = `translate3d(${cols[c] + S / 2}px, ${top + S + 6}px, 0)`;
+          pl.lbl.style.opacity = String(pa);
+          if (me.m.d) {
+            const mag = S / Math.max(me.m.d * s, 1e-300);
+            pl.mag.textContent = mag > 1.5 ? `drawn ${fmtTimes(mag)} bigger` : 'to scale';
+          }
+          placed = true;
+        }
+      }
+      if (!placed) this.show(me.plate!, false);
     }
 
     for (const bd of this.bodies) {
@@ -658,3 +787,59 @@ export class Scene {
 /** fraction of the plate's width taken by the disc itself */
 const MOON_FILL = 0.95;
 const SUN_FILL = 0.2;
+
+function fmtTimes(x: number): string {
+  if (x < 1000) return `${Math.round(x).toLocaleString('en-US')}\u00d7`;
+  const units: [number, string][] = [[1e18, 'quintillion'], [1e15, 'quadrillion'], [1e12, 'trillion'], [1e9, 'billion'], [1e6, 'million'], [1e3, 'thousand']];
+  for (const [v, n] of units) if (x >= v) return `${Number((x / v).toPrecision(2))} ${n}\u00d7`;
+  return `${x}`;
+}
+
+/** A glowing star (or a little cluster) drawn once into an image. */
+function starImage(c: [number, number, number], cluster: boolean): HTMLImageElement {
+  const N = 320;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = N;
+  const x = cv.getContext('2d')!;
+  x.fillStyle = '#000';
+  x.fillRect(0, 0, N, N);
+  x.globalCompositeOperation = 'lighter';
+  const star = (sx: number, sy: number, r: number) => {
+    const g = x.createRadialGradient(sx, sy, 0, sx, sy, r * 5);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.08, `rgba(${c[0]},${c[1]},${c[2]},0.95)`);
+    g.addColorStop(0.3, `rgba(${c[0]},${c[1]},${c[2]},0.25)`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g;
+    x.beginPath();
+    x.arc(sx, sy, r * 5, 0, Math.PI * 2);
+    x.fill();
+    // diffraction spikes
+    x.strokeStyle = `rgba(${c[0]},${c[1]},${c[2]},0.5)`;
+    x.lineWidth = Math.max(1, r * 0.12);
+    for (const [dx, dy] of [[1, 0], [0, 1]]) {
+      const sp = x.createLinearGradient(sx - dx * r * 6, sy - dy * r * 6, sx + dx * r * 6, sy + dy * r * 6);
+      sp.addColorStop(0, 'rgba(0,0,0,0)');
+      sp.addColorStop(0.5, `rgba(${c[0]},${c[1]},${c[2]},0.7)`);
+      sp.addColorStop(1, 'rgba(0,0,0,0)');
+      x.strokeStyle = sp;
+      x.beginPath();
+      x.moveTo(sx - dx * r * 6, sy - dy * r * 6);
+      x.lineTo(sx + dx * r * 6, sy + dy * r * 6);
+      x.stroke();
+    }
+  };
+  if (cluster) {
+    // the Seven Sisters, roughly as they appear in the sky
+    const pts: [number, number, number][] = [[0.5, 0.42, 11], [0.36, 0.36, 8], [0.62, 0.3, 7], [0.7, 0.5, 8], [0.42, 0.56, 6], [0.3, 0.5, 5], [0.56, 0.62, 6]];
+    for (const [px, py, r] of pts) star(px * N, py * N, r);
+    const neb = x.createRadialGradient(N / 2, N / 2, 0, N / 2, N / 2, N * 0.45);
+    neb.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.18)`);
+    neb.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = neb;
+    x.fillRect(0, 0, N, N);
+  } else star(N / 2, N / 2, 22);
+  const im = new Image();
+  im.src = cv.toDataURL();
+  return im;
+}

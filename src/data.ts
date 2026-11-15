@@ -107,32 +107,53 @@ export interface Marker {
   id: string;
   name: string;
   alt: number;
+  /** a big plate shown beside the tower */
   img?: string;
+  /** real diameter in metres, to say how much the plate is magnified */
+  d?: number;
+  credit?: string;
+  /** draw a glowing star instead of an image: [r,g,b], cluster for the Pleiades */
+  star?: [number, number, number];
+  cluster?: boolean;
 }
 
 export const MARKERS: Marker[] = [
   { id: 'everest', name: 'Summit of Mount Everest', alt: 8849 },
   { id: 'jet', name: 'Passenger jets cruise', alt: 11000 },
   { id: 'skydive', name: 'Highest skydive ever', alt: 41400 },
+  { id: 'meteors', name: 'Shooting stars burn up', alt: 85000, img: 'meteors', credit: 'Trouvelot, 1868' },
   { id: 'karman', name: 'Kármán line, where space begins', alt: 100000 },
   { id: 'iss', name: 'International Space Station', alt: 408000 },
   { id: 'hubble', name: 'Hubble Space Telescope', alt: 535000 },
   { id: 'gps', name: 'GPS satellites', alt: 20200e3 },
   { id: 'geo', name: 'Geostationary orbit', alt: 35786e3 },
   { id: 'moon', name: 'The Moon', alt: MOON_ALT },
-  { id: 'mars', name: 'Mars, at its closest', alt: 5.46e10, img: 'mars' },
-  { id: 'sun', name: 'The Sun', alt: SUN_ALT },
-  { id: 'jupiter', name: 'Jupiter, at its closest', alt: 5.88e11, img: 'jupiter' },
-  { id: 'saturn', name: 'Saturn, at its closest', alt: 1.2e12, img: 'saturn' },
-  { id: 'comet', name: 'Halley’s Comet, at its farthest', alt: 5.25e12, img: 'comet' },
+  { id: 'mars', name: 'Mars, at its closest', alt: 5.46e10, img: 'mars', d: 6.779e6, credit: 'Trouvelot, 1877' },
+  { id: 'sun', name: 'The Sun', alt: SUN_ALT, img: 'sun', d: 1.39e9, credit: 'Total eclipse, Trouvelot, 1878' },
+  { id: 'jupiter', name: 'Jupiter, at its closest', alt: 5.88e11, img: 'jupiter', d: 1.398e8, credit: 'Trouvelot, 1880' },
+  { id: 'saturn', name: 'Saturn, at its closest', alt: 1.2e12, img: 'saturn', d: 2.7e8, credit: 'Trouvelot, 1874' },
+  { id: 'neptune', name: 'Neptune, the last planet', alt: 4.3e12 },
+  { id: 'comet', name: 'Halley’s Comet, at its farthest', alt: 5.25e12, img: 'comet', credit: 'Trouvelot, 1881' },
+  { id: 'pluto', name: 'Pluto', alt: 5.9e12 },
   { id: 'voyager', name: 'Voyager 1, farthest human-made object', alt: 2.53e13 },
+  { id: 'oort', name: 'Oort Cloud, home of comets, begins', alt: 3e14 },
   { id: 'ly', name: 'One light year', alt: LY },
-  { id: 'proxima', name: 'Proxima Centauri, the nearest star', alt: 4.24 * LY },
-  { id: 'orion', name: 'Orion Nebula', alt: 1344 * LY, img: 'orion' },
+  { id: 'oortend', name: 'Edge of the Sun’s influence', alt: 1.5e16 },
+  { id: 'proxima', name: 'Proxima Centauri, the nearest star', alt: 4.24 * LY, star: [255, 120, 90], d: 2.1e8, credit: 'A small red dwarf' },
+  { id: 'sirius', name: 'Sirius, brightest star in the sky', alt: 8.6 * LY, star: [190, 215, 255], d: 2.4e9, credit: '25\u00d7 brighter than the Sun' },
+  { id: 'vega', name: 'Vega', alt: 25 * LY, star: [225, 235, 255], d: 3.3e9, credit: 'The North Star of the year 14,000' },
+  { id: 'pleiades', name: 'The Pleiades', alt: 444 * LY, star: [170, 200, 255], cluster: true, d: 86 * LY, credit: 'The Seven Sisters' },
+  { id: 'orion', name: 'Orion Nebula', alt: 1344 * LY, img: 'orion', d: 24 * LY, credit: 'Trouvelot, 1875' },
+  { id: 'crab', name: 'Crab Nebula, a star that exploded in 1054', alt: 6500 * LY },
+  { id: 'hercules', name: 'Great Cluster in Hercules', alt: 22200 * LY, img: 'hercules', d: 145 * LY, credit: 'Trouvelot, 1877' },
   { id: 'mwcenter', name: 'Centre of the Milky Way', alt: 26000 * LY },
   { id: 'mwacross', name: 'Width of the Milky Way', alt: 100000 * LY },
-  { id: 'andromeda', name: 'Andromeda Galaxy', alt: 2.5e6 * LY },
+  { id: 'lmc', name: 'Large Magellanic Cloud', alt: 160000 * LY },
+  { id: 'andromeda', name: 'Andromeda Galaxy', alt: 2.5e6 * LY, img: 'andromeda', d: 2.2e5 * LY, credit: 'Isaac Roberts, 1899' },
+  { id: 'whirlpool', name: 'Whirlpool Galaxy', alt: 2.3e7 * LY, img: 'whirlpool', d: 7.6e4 * LY, credit: 'Lord Rosse, 1845' },
   { id: 'virgo', name: 'Virgo Cluster', alt: 5.4e7 * LY },
+  { id: 'laniakea', name: 'Edge of Laniakea, our supercluster', alt: 2.6e8 * LY },
+  { id: 'quasar', name: 'Quasar 3C 273', alt: 2.4e9 * LY },
   { id: 'edge', name: 'Edge of the observable universe', alt: 4.65e10 * LY },
 ];
 
@@ -174,7 +195,7 @@ const F: Record<number, Fact> = {
   27: { tag: 'Top of the world', text: 'Higher than Mount Everest, and higher than airliners fly.' },
   28: { text: 'The sky is turning dark. 268 million layers.' },
   29: { text: 'Higher than the highest skydive ever made, from 41 km.' },
-  30: { tag: 'Space', text: 'You’ve crossed the Kármán line. Your stack of paper is officially in space.' },
+  30: { tag: 'Space', text: 'You\u2019ve crossed the K\u00e1rm\u00e1n line. Your stack of paper is officially in space. Shooting stars burn up just below.' },
   31: { text: 'The northern lights shimmer at around this height.' },
   32: { text: 'Astronauts on the Space Station could wave at your paper.' },
   33: { text: 'Higher than the Hubble Space Telescope.' },
@@ -198,6 +219,18 @@ const F: Record<number, Fact> = {
   67: { tag: 'One light year', text: 'Light itself needs a full year to climb your paper.' },
   69: { tag: 'Nearest star', text: 'Past Proxima Centauri, our closest neighbouring star.' },
   77: { text: 'Past the Orion Nebula, a nursery where new stars are born.' },
+  61: { text: 'Sunlight takes 9 days to reach the top of your paper.' },
+  62: { tag: 'Oort Cloud', text: 'Into the Oort Cloud, a vast shell of icy comets around the Sun.' },
+  68: { text: 'Past the edge of the Sun’s gravity. You’ve left the solar system for good.' },
+  70: { tag: 'Sirius', text: 'Past Sirius, the brightest star in our night sky.' },
+  72: { text: 'Past Vega, which will be our North Star in 12,000 years.' },
+  76: { text: 'Past the Pleiades, the Seven Sisters.' },
+  80: { text: 'Past the Crab Nebula. Astronomers in China watched this star explode in 1054.' },
+  81: { tag: 'Star cluster', text: 'Past the Great Cluster in Hercules: hundreds of thousands of stars packed into a ball.' },
+  84: { text: 'Past the Large Magellanic Cloud, a small galaxy orbiting ours.' },
+  91: { tag: 'Whirlpool', text: 'Past the Whirlpool Galaxy. Lord Rosse sketched its spiral in 1845, the first one anyone had seen.' },
+  95: { tag: 'Supercluster', text: 'Out of Laniakea, the supercluster of 100,000 galaxies we live in.' },
+  98: { text: 'Past quasar 3C 273, a black hole shining brighter than a trillion suns.' },
   78: { text: 'Past almost every star you can see with the naked eye.' },
   82: { tag: 'Galactic centre', text: 'All the way to the black hole at the centre of the Milky Way.' },
   83: { tag: 'The Milky Way', text: 'Taller than our entire galaxy is wide.' },
@@ -214,15 +247,45 @@ export function factFor(n: number): Fact {
   return { text: '' };
 }
 
-/** Milestones for the altimeter rail. */
+/** Milestones for the folding ruler; each one is clickable. */
 export const RAIL: { name: string; m: number }[] = [
-  { name: 'Hair', m: 7e-5 },
-  { name: 'Ant', m: 0.005 },
+  { name: 'Paper', m: PAPER_T },
+  { name: 'Flea', m: 2.5e-3 },
   { name: 'You', m: 1.7 },
+  { name: 'Pyramid', m: 139 },
   { name: 'Everest', m: 8849 },
+  { name: 'Space', m: 1e5 },
   { name: 'Moon', m: MOON_ALT },
   { name: 'Sun', m: SUN_ALT },
-  { name: 'Star', m: 4.24 * LY },
+  { name: 'Voyager', m: 2.53e13 },
+  { name: 'Nearest star', m: 4.24 * LY },
+  { name: 'Milky Way', m: 1e5 * LY },
   { name: 'Andromeda', m: 2.5e6 * LY },
   { name: 'Universe', m: 4.65e10 * LY },
 ];
+
+/** Fold count at which the stack first passes `m` metres. */
+export const foldFor = (m: number) => Math.max(0, Math.ceil(Math.log2(m / PAPER_T) - 1e-9));
+
+/** How long it would take to climb the stack. */
+export const CLIMBERS: { name: string; v: number }[] = [
+  { name: 'On foot', v: 5 / 3.6 },
+  { name: 'By car', v: 100 / 3.6 },
+  { name: 'By jet', v: 900 / 3.6 },
+  { name: 'Fastest spacecraft', v: 192e3 },
+  { name: 'At light speed', v: 299792458 },
+];
+
+export function fmtDuration(s: number): string {
+  if (s < 1) return s < 0.001 ? 'instantly' : `${sig(s * 1000)} ms`;
+  if (s < 60) return `${sig(s)} sec`;
+  if (s < 3600) return `${sig(s / 60)} min`;
+  if (s < 86400) return `${sig(s / 3600)} hours`;
+  if (s < 86400 * 365.25) return `${sig(s / 86400)} days`;
+  const y = s / (86400 * 365.25);
+  if (y < 1000) return `${sig(y)} years`;
+  if (y < 1e6) return `${sig(y / 1e3)} thousand yrs`;
+  if (y < 1e9) return `${sig(y / 1e6)} million yrs`;
+  if (y < 1e12) return `${sig(y / 1e9)} billion yrs`;
+  return `${sig(y / 1e12)} trillion yrs`;
+}
